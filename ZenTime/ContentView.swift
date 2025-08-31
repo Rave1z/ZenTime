@@ -20,163 +20,14 @@ struct ContentView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 30) {
-                // Header
-                VStack {
-                    Text("ZenTime")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-                    
-                    Text("Meditation Timer")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                
-                // Timer Display
-                ZStack {
-                    Circle()
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 8)
-                        .frame(width: 250, height: 250)
-                    
-                    Circle()
-                        .trim(from: 0, to: timerManager.progress)
-                        .stroke(
-                            LinearGradient(
-                                gradient: Gradient(colors: [.blue, .purple]),
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                        )
-                        .frame(width: 250, height: 250)
-                        .rotationEffect(.degrees(-90))
-                        .animation(.easeInOut(duration: 1), value: timerManager.progress)
-                    
-                    VStack {
-                        Text(timerManager.timeString)
-                            .font(.system(size: 48, weight: .bold, design: .rounded))
-                            .foregroundColor(.primary)
-                        
-                        Text(timerManager.isRunning ? "Meditating..." : "Ready")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                // Duration Selector
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Duration")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 15) {
-                            ForEach([1, 5, 10, 15, 20, 30, 45, 60], id: \.self) { duration in
-                                Button(action: {
-                                    selectedDuration = duration
-                                    timerManager.setDuration(duration)
-                                }) {
-                                    Text("\(duration)m")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(selectedDuration == duration ? .white : .primary)
-                                        .padding(.horizontal, 20)
-                                        .padding(.vertical, 10)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 20)
-                                                .fill(selectedDuration == duration ? Color.blue : Color.gray.opacity(0.2))
-                                        )
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                }
-                
-                // Ambient Sound Selector
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("Ambient Sound")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 15) {
-                            ForEach(AmbientSound.allCases, id: \.self) { sound in
-                                Button(action: {
-                                    selectedAmbientSound = sound
-                                    timerManager.setAmbientSound(sound)
-                                }) {
-                                    VStack(spacing: 5) {
-                                        Image(systemName: sound.iconName)
-                                            .font(.title2)
-                                        Text(sound.displayName)
-                                            .font(.caption)
-                                    }
-                                    .foregroundColor(selectedAmbientSound == sound ? .white : .primary)
-                                    .padding(.horizontal, 15)
-                                    .padding(.vertical, 10)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 15)
-                                            .fill(selectedAmbientSound == sound ? Color.green : Color.gray.opacity(0.2))
-                                    )
-                                }
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                }
-                
-                // Control Buttons
-                HStack(spacing: 20) {
-                    // Reset Button
-                    Button(action: {
-                        timerManager.reset()
-                    }) {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.title2)
-                            .foregroundColor(.white)
-                            .frame(width: 60, height: 60)
-                            .background(Circle().fill(Color.orange))
-                    }
-                    
-                    // Start/Pause Button
-                    Button(action: {
-                        if timerManager.isRunning {
-                            timerManager.pause()
-                        } else {
-                            timerManager.start()
-                        }
-                    }) {
-                        Image(systemName: timerManager.isRunning ? "pause.fill" : "play.fill")
-                            .font(.title)
-                            .foregroundColor(.white)
-                            .frame(width: 80, height: 80)
-                            .background(Circle().fill(timerManager.isRunning ? Color.red : Color.green))
-                    }
-                    
-                    // Resume Button (only show when paused)
-                    if timerManager.isPaused {
-                        Button(action: {
-                            timerManager.resume()
-                        }) {
-                            Image(systemName: "play.fill")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .frame(width: 60, height: 60)
-                                .background(Circle().fill(Color.blue))
-                        }
-                    } else {
-                        // Settings Button
-                        Button(action: {
-                            showingSettings = true
-                        }) {
-                            Image(systemName: "gearshape.fill")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .frame(width: 60, height: 60)
-                                .background(Circle().fill(Color.gray))
-                        }
-                    }
-                }
+                HeaderView()
+                TimerView(timerManager: timerManager)
+                DurationSelectorView(selectedDuration: $selectedDuration, timerManager: timerManager)
+                AmbientSoundSelectorView(selectedAmbientSound: $selectedAmbientSound, timerManager: timerManager)
+                ControlButtonsView(
+                    timerManager: timerManager,
+                    showingSettings: $showingSettings
+                )
                 
                 Spacer()
             }
@@ -186,7 +37,7 @@ struct ContentView: View {
                 timerManager.requestNotificationPermission()
                 sessionManager.loadSessions()
             }
-            .onChange(of: timerManager.isCompleted) { completed in
+            .onChange(of: timerManager.isCompleted) { _, completed in
                 if completed {
                     sessionManager.addSession(duration: selectedDuration, ambientSound: selectedAmbientSound)
                 }
@@ -197,6 +48,349 @@ struct ContentView: View {
             .sheet(isPresented: $showingHistory) {
                 HistoryView(sessionManager: sessionManager)
             }
+        }
+    }
+}
+
+// MARK: - Header View
+struct HeaderView: View {
+    var body: some View {
+        VStack {
+            Text("ZenTime")
+                .font(.system(size: 42, weight: .heavy, design: .rounded))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.purple, .pink, .orange],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            
+            Text("Your Daily Chill Session")
+                .font(.title3)
+                .fontWeight(.medium)
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
+// MARK: - Timer View
+struct TimerView: View {
+    @ObservedObject var timerManager: TimerManager
+    
+    var body: some View {
+        ZStack {
+            TimerBackgroundCircle()
+            TimerProgressCircle(progress: timerManager.progress)
+            TimerContentView(timerManager: timerManager)
+        }
+    }
+}
+
+struct TimerBackgroundCircle: View {
+    var body: some View {
+        Circle()
+            .stroke(Color.gray.opacity(0.2), lineWidth: 12)
+            .frame(width: 280, height: 280)
+    }
+}
+
+struct TimerProgressCircle: View {
+    let progress: Double
+    
+    var body: some View {
+        Circle()
+            .trim(from: 0, to: progress)
+            .stroke(
+                LinearGradient(
+                    gradient: Gradient(colors: [.purple, .pink, .orange, .yellow]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ),
+                style: StrokeStyle(lineWidth: 12, lineCap: .round)
+            )
+            .frame(width: 280, height: 280)
+            .rotationEffect(.degrees(-90))
+            .animation(.easeInOut(duration: 1), value: progress)
+    }
+}
+
+struct TimerContentView: View {
+    @ObservedObject var timerManager: TimerManager
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(timerManager.timeString)
+                .font(.system(size: 52, weight: .black, design: .rounded))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.purple, .pink],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+            
+            Text(timerManager.isRunning ? "Stay focused! 💪" : "Ready to chill? 😌")
+                .font(.title3)
+                .fontWeight(.semibold)
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
+// MARK: - Duration Selector View
+struct DurationSelectorView: View {
+    @Binding var selectedDuration: Int
+    @ObservedObject var timerManager: TimerManager
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("How long do you want to focus?")
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
+            
+            DurationScrollView(selectedDuration: $selectedDuration, timerManager: timerManager)
+        }
+    }
+}
+
+struct DurationScrollView: View {
+    @Binding var selectedDuration: Int
+    @ObservedObject var timerManager: TimerManager
+    
+    private let durations = [1, 5, 10, 15, 20, 30, 45, 60]
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 15) {
+                ForEach(durations, id: \.self) { duration in
+                    DurationButton(
+                        duration: duration,
+                        isSelected: selectedDuration == duration,
+                        action: {
+                            selectedDuration = duration
+                            timerManager.setDuration(duration)
+                        }
+                    )
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+}
+
+struct DurationButton: View {
+    let duration: Int
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text("\(duration)m")
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .foregroundColor(isSelected ? .white : .primary)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 25)
+                        .fill(isSelected ? 
+                            AnyShapeStyle(LinearGradient(colors: [.purple, .pink], startPoint: .leading, endPoint: .trailing)) :
+                            AnyShapeStyle(Color.gray.opacity(0.1))
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 25)
+                        .stroke(isSelected ? Color.clear : Color.gray.opacity(0.3), lineWidth: 1)
+                )
+        }
+    }
+}
+
+// MARK: - Ambient Sound Selector View
+struct AmbientSoundSelectorView: View {
+    @Binding var selectedAmbientSound: AmbientSound
+    @ObservedObject var timerManager: TimerManager
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Pick your vibe 🎵")
+                .font(.title3)
+                .fontWeight(.bold)
+                .foregroundColor(.primary)
+            
+            AmbientSoundScrollView(selectedAmbientSound: $selectedAmbientSound, timerManager: timerManager)
+        }
+    }
+}
+
+struct AmbientSoundScrollView: View {
+    @Binding var selectedAmbientSound: AmbientSound
+    @ObservedObject var timerManager: TimerManager
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 15) {
+                ForEach(AmbientSound.allCases, id: \.self) { sound in
+                    AmbientSoundButton(
+                        sound: sound,
+                        isSelected: selectedAmbientSound == sound,
+                        action: {
+                            selectedAmbientSound = sound
+                            timerManager.setAmbientSound(sound)
+                        }
+                    )
+                }
+            }
+            .padding(.horizontal)
+        }
+    }
+}
+
+struct AmbientSoundButton: View {
+    let sound: AmbientSound
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                Image(systemName: sound.iconName)
+                    .font(.title)
+                Text(sound.displayName)
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .foregroundColor(isSelected ? .white : .primary)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 15)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(isSelected ? 
+                        AnyShapeStyle(LinearGradient(colors: [.green, .teal], startPoint: .leading, endPoint: .trailing)) :
+                        AnyShapeStyle(Color.gray.opacity(0.1))
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(isSelected ? Color.clear : Color.gray.opacity(0.3), lineWidth: 1)
+            )
+        }
+    }
+}
+
+// MARK: - Control Buttons View
+struct ControlButtonsView: View {
+    @ObservedObject var timerManager: TimerManager
+    @Binding var showingSettings: Bool
+    
+    var body: some View {
+        HStack(spacing: 25) {
+            ResetButton(action: { timerManager.reset() })
+            StartPauseButton(timerManager: timerManager)
+            
+            if timerManager.isPaused {
+                ResumeButton(action: { timerManager.resume() })
+            } else {
+                SettingsButton(action: { showingSettings = true })
+            }
+        }
+    }
+}
+
+struct ResetButton: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.title2)
+                Text("Reset")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .foregroundColor(.white)
+            .frame(width: 70, height: 70)
+            .background(
+                Circle()
+                    .fill(LinearGradient(colors: [.orange, .red], startPoint: .top, endPoint: .bottom))
+            )
+        }
+    }
+}
+
+struct StartPauseButton: View {
+    @ObservedObject var timerManager: TimerManager
+    
+    var body: some View {
+        Button(action: {
+            if timerManager.isRunning {
+                timerManager.pause()
+            } else {
+                timerManager.start()
+            }
+        }) {
+            VStack(spacing: 4) {
+                Image(systemName: timerManager.isRunning ? "pause.fill" : "play.fill")
+                    .font(.title)
+                Text(timerManager.isRunning ? "Pause" : "Start")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .foregroundColor(.white)
+            .frame(width: 90, height: 90)
+            .background(
+                Circle()
+                    .fill(timerManager.isRunning ? 
+                        LinearGradient(colors: [.red, .pink], startPoint: .top, endPoint: .bottom) :
+                        LinearGradient(colors: [.green, .teal], startPoint: .top, endPoint: .bottom)
+                    )
+            )
+        }
+    }
+}
+
+struct ResumeButton: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: "play.fill")
+                    .font(.title2)
+                Text("Resume")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .foregroundColor(.white)
+            .frame(width: 70, height: 70)
+            .background(
+                Circle()
+                    .fill(LinearGradient(colors: [.blue, .purple], startPoint: .top, endPoint: .bottom))
+            )
+        }
+    }
+}
+
+struct SettingsButton: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: "gearshape.fill")
+                    .font(.title2)
+                Text("Settings")
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .foregroundColor(.white)
+            .frame(width: 70, height: 70)
+            .background(
+                Circle()
+                    .fill(LinearGradient(colors: [.gray, .secondary], startPoint: .top, endPoint: .bottom))
+            )
         }
     }
 }
@@ -376,8 +570,8 @@ class TimerManager: ObservableObject {
     
     private func sendNotification() {
         let content = UNMutableNotificationContent()
-        content.title = "Meditation Complete"
-        content.body = "Amazingly Done! Your meditation session has finished."
+        content.title = "Focus Session Complete! 🎉"
+        content.body = "You crushed it! Your chill session is done. Time to celebrate! 🚀"
         content.sound = .default
         
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
@@ -437,10 +631,10 @@ enum AmbientSound: String, CaseIterable, Codable {
     
     var displayName: String {
         switch self {
-        case .none: return "None"
-        case .rain: return "Rain"
-        case .brownNoise: return "Brown Noise"
-        case .omTone: return "Om Tone"
+        case .none: return "Silent"
+        case .rain: return "Rainy Day"
+        case .brownNoise: return "White Noise"
+        case .omTone: return "Zen Vibes"
         }
     }
     
@@ -463,19 +657,19 @@ struct SettingsView: View {
     var body: some View {
         NavigationView {
             List {
-                Section(header: Text("Session History")) {
-                    Button("View History") {
+                Section(header: Text("Your Progress")) {
+                    Button("View Your Sessions") {
                         // This would show the history view
                     }
                     
-                    Button("Clear History") {
+                    Button("Clear All Sessions") {
                         sessionManager.clearHistory()
                     }
                     .foregroundColor(.red)
                 }
                 
-                Section(header: Text("Notifications")) {
-                    Button("Daily Reminder Settings") {
+                Section(header: Text("Stay Motivated")) {
+                    Button("Set Daily Reminders") {
                         showingReminderSettings = true
                     }
                 }
@@ -489,7 +683,7 @@ struct SettingsView: View {
                     }
                 }
             }
-            .navigationTitle("Settings")
+            .navigationTitle("⚙️ Settings")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(trailing: Button("Done") {
                 presentationMode.wrappedValue.dismiss()
@@ -531,7 +725,7 @@ struct HistoryView: View {
                     .padding(.vertical, 5)
                 }
             }
-            .navigationTitle("Session History")
+            .navigationTitle("📊 Your Sessions")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(trailing: Button("Done") {
                 presentationMode.wrappedValue.dismiss()
@@ -549,15 +743,15 @@ struct ReminderSettingsView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Daily Reminder")) {
-                    Toggle("Enable Daily Reminder", isOn: $isReminderEnabled)
+                Section(header: Text("Daily Motivation")) {
+                    Toggle("Get Daily Reminders", isOn: $isReminderEnabled)
                     
                     if isReminderEnabled {
-                        DatePicker("Reminder Time", selection: $reminderTime, displayedComponents: .hourAndMinute)
+                        DatePicker("When to remind you", selection: $reminderTime, displayedComponents: .hourAndMinute)
                     }
                 }
             }
-            .navigationTitle("Reminder Settings")
+            .navigationTitle("⏰ Reminders")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(trailing: Button("Done") {
                 presentationMode.wrappedValue.dismiss()
