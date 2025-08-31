@@ -342,7 +342,7 @@ class TimerManager: ObservableObject {
                 print("Error playing ambient sound: \(error.localizedDescription)")
             }
         } else {
-            print("Audio file not found: \(fileName).mp3")
+            print("Audio file is not found: \(fileName).mp3")
         }
     }
     
@@ -377,7 +377,7 @@ class TimerManager: ObservableObject {
     private func sendNotification() {
         let content = UNMutableNotificationContent()
         content.title = "Meditation Complete"
-        content.body = "Great job! Your meditation session has finished."
+        content.body = "Amazingly Done! Your meditation session has finished."
         content.sound = .default
         
         let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
