@@ -16,14 +16,19 @@ struct ContentView: View {
     @State private var selectedAmbientSound: AmbientSound = .none
     @State private var showingSettings = false
     @State private var showingHistory = false
+    @State private var showingBoxBreathing = false
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 30) {
+            VStack(spacing: 26) {
                 HeaderView()
                 TimerView(timerManager: timerManager)
                 DurationSelectorView(selectedDuration: $selectedDuration, timerManager: timerManager)
                 AmbientSoundSelectorView(selectedAmbientSound: $selectedAmbientSound, timerManager: timerManager)
+                
+                // Box Breathing Card
+                BoxBreathingCard(action: { showingBoxBreathing = true })
+                
                 ControlButtonsView(
                     timerManager: timerManager,
                     showingSettings: $showingSettings
@@ -48,16 +53,82 @@ struct ContentView: View {
             .sheet(isPresented: $showingHistory) {
                 HistoryView(sessionManager: sessionManager)
             }
+            .fullScreenCover(isPresented: $showingBoxBreathing) {
+                BoxBreathingView()
+            }
         }
+    }
+}
+
+// MARK: - Box Breathing Card
+struct BoxBreathingCard: View {
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: "wind")
+                    .font(.system(size: 28))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.blue, .cyan],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Box Breathing")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                    
+                    Text("4-4-4-4 breathing technique")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "chevron.right")
+                    .font(.headline)
+                    .foregroundColor(.secondary)
+            }
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(
+                        LinearGradient(
+                            colors: [.blue.opacity(0.1), .cyan.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(
+                        LinearGradient(
+                            colors: [.blue.opacity(0.3), .cyan.opacity(0.3)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1.5
+                    )
+            )
+        }
+        .padding(.horizontal)
     }
 }
 
 // MARK: - Header View
 struct HeaderView: View {
     var body: some View {
-        VStack {
+        VStack(spacing: 4) {
             Text("ZenTime")
-                .font(.system(size: 42, weight: .heavy, design: .rounded))
+                .font(.system(size: 36, weight: .heavy, design: .rounded))
+                .minimumScaleFactor(0.7)
+                .lineLimit(1)
                 .foregroundStyle(
                     LinearGradient(
                         colors: [.purple, .pink, .orange],
@@ -67,7 +138,7 @@ struct HeaderView: View {
                 )
             
             Text("Your Daily Chill Session")
-                .font(.title3)
+                .font(.headline)
                 .fontWeight(.medium)
                 .foregroundColor(.secondary)
         }
@@ -90,8 +161,8 @@ struct TimerView: View {
 struct TimerBackgroundCircle: View {
     var body: some View {
         Circle()
-            .stroke(Color.gray.opacity(0.2), lineWidth: 12)
-            .frame(width: 280, height: 280)
+            .stroke(Color.gray.opacity(0.2), lineWidth: 10)
+            .frame(width: 240, height: 240)
     }
 }
 
@@ -107,9 +178,9 @@ struct TimerProgressCircle: View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 ),
-                style: StrokeStyle(lineWidth: 12, lineCap: .round)
+                style: StrokeStyle(lineWidth: 10, lineCap: .round)
             )
-            .frame(width: 280, height: 280)
+            .frame(width: 240, height: 240)
             .rotationEffect(.degrees(-90))
             .animation(.easeInOut(duration: 1), value: progress)
     }
@@ -119,9 +190,9 @@ struct TimerContentView: View {
     @ObservedObject var timerManager: TimerManager
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             Text(timerManager.timeString)
-                .font(.system(size: 52, weight: .black, design: .rounded))
+                .font(.system(size: 46, weight: .black, design: .rounded))
                 .foregroundStyle(
                     LinearGradient(
                         colors: [.purple, .pink],
@@ -131,7 +202,7 @@ struct TimerContentView: View {
                 )
             
             Text(timerManager.isRunning ? "Stay focused! 💪" : "Ready to chill? 😌")
-                .font(.title3)
+                .font(.subheadline)
                 .fontWeight(.semibold)
                 .foregroundColor(.secondary)
         }
@@ -144,9 +215,9 @@ struct DurationSelectorView: View {
     @ObservedObject var timerManager: TimerManager
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("How long do you want to focus?")
-                .font(.title3)
+                .font(.headline)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
             
@@ -163,7 +234,7 @@ struct DurationScrollView: View {
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 15) {
+            HStack(spacing: 12) {
                 ForEach(durations, id: \.self) { duration in
                     DurationButton(
                         duration: duration,
@@ -188,19 +259,19 @@ struct DurationButton: View {
     var body: some View {
         Button(action: action) {
             Text("\(duration)m")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
+                .font(.system(size: 16, weight: .bold, design: .rounded))
                 .foregroundColor(isSelected ? .white : .primary)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
                 .background(
-                    RoundedRectangle(cornerRadius: 25)
-                        .fill(isSelected ? 
+                    RoundedRectangle(cornerRadius: 22)
+                        .fill(isSelected ?
                             AnyShapeStyle(LinearGradient(colors: [.purple, .pink], startPoint: .leading, endPoint: .trailing)) :
                             AnyShapeStyle(Color.gray.opacity(0.1))
                         )
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 25)
+                    RoundedRectangle(cornerRadius: 22)
                         .stroke(isSelected ? Color.clear : Color.gray.opacity(0.3), lineWidth: 1)
                 )
         }
@@ -213,9 +284,9 @@ struct AmbientSoundSelectorView: View {
     @ObservedObject var timerManager: TimerManager
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 10) {
             Text("Pick your vibe 🎵")
-                .font(.title3)
+                .font(.headline)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
             
@@ -230,7 +301,7 @@ struct AmbientSoundScrollView: View {
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 15) {
+            HStack(spacing: 12) {
                 ForEach(AmbientSound.allCases, id: \.self) { sound in
                     AmbientSoundButton(
                         sound: sound,
@@ -254,25 +325,25 @@ struct AmbientSoundButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
+            VStack(spacing: 6) {
                 Image(systemName: sound.iconName)
-                    .font(.title)
+                    .font(.system(size: 18))
                 Text(sound.displayName)
-                    .font(.caption)
+                    .font(.caption2)
                     .fontWeight(.medium)
             }
             .foregroundColor(isSelected ? .white : .primary)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 15)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 18)
                     .fill(isSelected ? 
                         AnyShapeStyle(LinearGradient(colors: [.green, .teal], startPoint: .leading, endPoint: .trailing)) :
                         AnyShapeStyle(Color.gray.opacity(0.1))
                     )
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 18)
                     .stroke(isSelected ? Color.clear : Color.gray.opacity(0.3), lineWidth: 1)
             )
         }
@@ -285,7 +356,7 @@ struct ControlButtonsView: View {
     @Binding var showingSettings: Bool
     
     var body: some View {
-        HStack(spacing: 25) {
+        HStack(spacing: 20) {
             ResetButton(action: { timerManager.reset() })
             StartPauseButton(timerManager: timerManager)
             
@@ -303,15 +374,15 @@ struct ResetButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 Image(systemName: "arrow.clockwise")
-                    .font(.title2)
+                    .font(.system(size: 18, weight: .semibold))
                 Text("Reset")
-                    .font(.caption)
+                    .font(.caption2)
                     .fontWeight(.medium)
             }
             .foregroundColor(.white)
-            .frame(width: 70, height: 70)
+            .frame(width: 60, height: 60)
             .background(
                 Circle()
                     .fill(LinearGradient(colors: [.orange, .red], startPoint: .top, endPoint: .bottom))
@@ -331,15 +402,15 @@ struct StartPauseButton: View {
                 timerManager.start()
             }
         }) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 Image(systemName: timerManager.isRunning ? "pause.fill" : "play.fill")
-                    .font(.title)
+                    .font(.system(size: 22, weight: .semibold))
                 Text(timerManager.isRunning ? "Pause" : "Start")
-                    .font(.caption)
+                    .font(.caption2)
                     .fontWeight(.medium)
             }
             .foregroundColor(.white)
-            .frame(width: 90, height: 90)
+            .frame(width: 78, height: 78)
             .background(
                 Circle()
                     .fill(timerManager.isRunning ? 
@@ -356,15 +427,15 @@ struct ResumeButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 Image(systemName: "play.fill")
-                    .font(.title2)
+                    .font(.system(size: 18, weight: .semibold))
                 Text("Resume")
-                    .font(.caption)
+                    .font(.caption2)
                     .fontWeight(.medium)
             }
             .foregroundColor(.white)
-            .frame(width: 70, height: 70)
+            .frame(width: 60, height: 60)
             .background(
                 Circle()
                     .fill(LinearGradient(colors: [.blue, .purple], startPoint: .top, endPoint: .bottom))
@@ -378,15 +449,15 @@ struct SettingsButton: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 2) {
                 Image(systemName: "gearshape.fill")
-                    .font(.title2)
+                    .font(.system(size: 18, weight: .semibold))
                 Text("Settings")
-                    .font(.caption)
+                    .font(.caption2)
                     .fontWeight(.medium)
             }
             .foregroundColor(.white)
-            .frame(width: 70, height: 70)
+            .frame(width: 60, height: 60)
             .background(
                 Circle()
                     .fill(LinearGradient(colors: [.gray, .secondary], startPoint: .top, endPoint: .bottom))
@@ -704,7 +775,7 @@ struct HistoryView: View {
         NavigationView {
             List {
                 ForEach(sessionManager.sessions.reversed()) { session in
-                    VStack(alignment: .leading, spacing: 5) {
+                    VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Text("\(session.duration) minutes")
                                 .font(.headline)
@@ -715,14 +786,14 @@ struct HistoryView: View {
                         }
                         
                         Text(session.date, style: .date)
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                         
                         Text(session.date, style: .time)
-                            .font(.caption)
+                            .font(.caption2)
                             .foregroundColor(.secondary)
                     }
-                    .padding(.vertical, 5)
+                    .padding(.vertical, 4)
                 }
             }
             .navigationTitle("📊 Your Sessions")
