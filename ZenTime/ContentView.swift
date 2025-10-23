@@ -619,8 +619,6 @@ class TimerManager: ObservableObject {
             return "rain_sound"
         case .brownNoise:
             return "brown_noise"
-        case .omTone:
-            return "om_tone"
         }
     }
     
@@ -698,14 +696,12 @@ enum AmbientSound: String, CaseIterable, Codable {
     case none = "none"
     case rain = "rain"
     case brownNoise = "brown_noise"
-    case omTone = "om_tone"
     
     var displayName: String {
         switch self {
         case .none: return "Silent"
         case .rain: return "Rainy Day"
         case .brownNoise: return "White Noise"
-        case .omTone: return "Zen Vibes"
         }
     }
     
@@ -714,7 +710,6 @@ enum AmbientSound: String, CaseIterable, Codable {
         case .none: return "speaker.slash"
         case .rain: return "cloud.rain"
         case .brownNoise: return "waveform"
-        case .omTone: return "music.note"
         }
     }
 }

@@ -444,7 +444,6 @@ class BoxBreathingManager: ObservableObject {
         case .none: return ""
         case .rain: return "rain_sound"
         case .brownNoise: return "brown_noise"
-        case .omTone: return "om_tone"
         }
     }
     
