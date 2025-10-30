@@ -493,9 +493,12 @@ class TimerManager: ObservableObject {
     }
     
     func setAmbientSound(_ sound: AmbientSound) {
+        print("[Ambient] setAmbientSound called with: \(sound.rawValue) (display: \(sound.displayName))")
         stopAmbientSound()
         if sound != .none {
             playAmbientSound(sound)
+        } else {
+            print("[Ambient] Selected sound is .none — no playback")
         }
     }
     
@@ -588,9 +591,11 @@ class TimerManager: ObservableObject {
         
         // Get the audio file name based on the sound type
         let fileName = getAudioFileName(for: sound)
+        print("[Ambient] Resolving filename for sound=\(sound.rawValue) → \(fileName).mp3")
         
         // Load and play the audio file
         if let audioURL = Bundle.main.url(forResource: fileName, withExtension: "mp3") {
+            print("[Ambient] Found file in bundle at URL: \(audioURL)")
             do {
                 // Configure audio session for ambient playback
                 try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default, options: [.mixWithOthers])
@@ -600,14 +605,15 @@ class TimerManager: ObservableObject {
                 ambientPlayer = try AVAudioPlayer(contentsOf: audioURL)
                 ambientPlayer?.numberOfLoops = -1 // Loop indefinitely
                 ambientPlayer?.volume = 0.3 // Set volume to 30%
-                ambientPlayer?.play()
+                let didStart = ambientPlayer?.play() ?? false
+                print("[Ambient] Started playback=\(didStart), volume=\(ambientPlayer?.volume ?? -1), loops=\(ambientPlayer?.numberOfLoops ?? 0)")
                 
-                print("Playing ambient sound: \(sound.displayName)")
+                print("[Ambient] Playing: \(sound.displayName)")
             } catch {
-                print("Error playing ambient sound: \(error.localizedDescription)")
+                print("[Ambient][Error] AVAudioPlayer init/play failed: \(error.localizedDescription)")
             }
         } else {
-            print("Audio file is not found: \(fileName).mp3")
+            print("[Ambient][Error] Audio file not found in bundle: \(fileName).mp3")
         }
     }
     
@@ -623,6 +629,11 @@ class TimerManager: ObservableObject {
     }
     
     private func stopAmbientSound() {
+        if let player = ambientPlayer {
+            print("[Ambient] Stopping current playback. currentTime=\(player.currentTime)")
+        } else {
+            print("[Ambient] No ambient player to stop")
+        }
         ambientPlayer?.stop()
         ambientPlayer = nil
     }
