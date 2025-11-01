@@ -623,8 +623,8 @@ class TimerManager: ObservableObject {
             return ""
         case .rain:
             return "rain_sound"
-        case .brownNoise:
-            return "brown_noise"
+        case .whiteNoise:
+            return "white_noise"
         }
     }
     
@@ -706,13 +706,13 @@ struct MeditationSession: Codable, Identifiable {
 enum AmbientSound: String, CaseIterable, Codable {
     case none = "none"
     case rain = "rain"
-    case brownNoise = "brown_noise"
+    case whiteNoise = "white_noise"
     
     var displayName: String {
         switch self {
         case .none: return "Silent"
         case .rain: return "Rainy Day"
-        case .brownNoise: return "White Noise"
+        case .whiteNoise: return "White Noise"
         }
     }
     
@@ -720,7 +720,7 @@ enum AmbientSound: String, CaseIterable, Codable {
         switch self {
         case .none: return "speaker.slash"
         case .rain: return "cloud.rain"
-        case .brownNoise: return "waveform"
+        case .whiteNoise: return "waveform"
         }
     }
 }

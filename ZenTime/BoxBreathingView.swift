@@ -443,7 +443,7 @@ class BoxBreathingManager: ObservableObject {
         switch sound {
         case .none: return ""
         case .rain: return "rain_sound"
-        case .brownNoise: return "brown_noise"
+        case .whiteNoise: return "white_noise"
         }
     }
     
